@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Treinamento Comercial – Funil Completo LTL</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-6">
+
+<h1 class="text-2xl font-bold mb-4">🚚 Treinamento Comercial – Funil Completo (Transportadora LTL)</h1>
+<p class="mb-6 text-slate-600">Simulador para treinar todas as etapas do funil: Prospecção → Qualificação → Diagnóstico → Proposta → Cross Sell.</p>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+  <div class="md:col-span-1 bg-white rounded-2xl shadow p-4">
+    <h2 class="font-semibold mb-2">📊 Etapa do Funil</h2>
+    <select id="stage" class="w-full border rounded-xl p-2 text-sm">
+      <option value="prospect">Prospecção</option>
+      <option value="qualify">Qualificação</option>
+      <option value="diagnostic">Diagnóstico</option>
+      <option value="proposal">Proposta</option>
+      <option value="cross">Cross Sell</option>
+    </select>
+
+    <div class="mt-4">
+      <h3 class="font-semibold text-sm mb-1">🎯 Objetivo</h3>
+      <p id="objective" class="text-xs text-slate-600"></p>
+    </div>
+
+    <button onclick="startScenario()" class="mt-6 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl w-full text-sm font-semibold">Iniciar Simulação</button>
+  </div>
+
+  <div class="md:col-span-3 bg-white rounded-2xl shadow flex flex-col">
+    <div id="chat" class="flex-1 p-6 space-y-3 overflow-y-auto"></div>
+    <div class="border-t p-4 flex gap-2">
+      <input id="input" class="flex-1 border rounded-xl px-4 py-2 text-sm" placeholder="Digite sua fala..." />
+      <button onclick="send()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const objectives = {
+  prospect: "Quebrar objeção inicial e gerar interesse",
+  qualify: "Levantar volume, frequência, rotas e decisor",
+  diagnostic: "Entender dores operacionais e financeiras",
+  proposal: "Avançar para proposta ou próxima etapa",
+  cross: "Identificar novas rotas ou aumento de share"
+};
+
+function startScenario() {
+  const stage = document.getElementById('stage').value;
+  document.getElementById('chat').innerHTML = "";
+  document.getElementById('objective').innerText = objectives[stage];
+  bot(`Cliente: Pode falar, o que você precisa?`);
+}
+
+function send() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text) return;
+  user(text);
+  input.value = "";
+  setTimeout(() => respond(text), 700);
+}
+
+function user(text) {
+  chat.innerHTML += `<div class='text-right'><div class='inline-block bg-orange-100 px-4 py-2 rounded-xl text-sm'>${text}</div></div>`;
+}
+
+function bot(text) {
+  chat.innerHTML += `<div class='text-left'><div class='inline-block bg-slate-200 px-4 py-2 rounded-xl text-sm'>${text}</div></div>`;
+}
+
+function respond(text) {
+  const t = text.toLowerCase();
+  if (t.includes('volume')) bot('Cliente: Enviamos de 2 a 4 vezes por semana.');
+  else if (t.includes('rota')) bot('Cliente: Principalmente SP e PR.');
+  else if (t.includes('problema') || t.includes('dor')) bot('Cliente: Muito atraso e pouca informação.');
+  else if (t.includes('preço')) bot('Cliente: Preço conta, mas confiabilidade pesa mais.');
+  else if (t.includes('agenda') || t.includes('proposta')) bot('Cliente: Pode preparar algo e me enviar.');
+  else bot('Cliente: Certo, continua.');
+}
+</script>
+</body>
+</html>
