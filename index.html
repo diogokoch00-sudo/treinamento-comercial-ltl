@@ -8,18 +8,19 @@
 </head>
 <body class="bg-slate-100 min-h-screen p-6">
 
-<h1 class="text-2xl font-bold mb-4">🚚 Treinamento Comercial – Funil Completo (Transportadora LTL)</h1>
-<p class="mb-6 text-slate-600">Simulador para treinar todas as etapas do funil: Prospecção → Qualificação → Diagnóstico → Proposta → Cross Sell.</p>
+<h1 class="text-2xl font-bold mb-2">🚚 Treinamento Comercial – Funil Completo (Transportadora LTL)</h1>
+<p class="mb-6 text-slate-600">Simulador interativo por etapa do funil. O cliente reage de acordo com SUAS perguntas.</p>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
   <div class="md:col-span-1 bg-white rounded-2xl shadow p-4">
     <h2 class="font-semibold mb-2">📊 Etapa do Funil</h2>
-    <select id="stage" class="w-full border rounded-xl p-2 text-sm">
+    <select id="stage" class="w-full border rounded-xl p-2 text-sm" onchange="resetSim()">
       <option value="prospect">Prospecção</option>
       <option value="qualify">Qualificação</option>
       <option value="diagnostic">Diagnóstico</option>
       <option value="proposal">Proposta</option>
       <option value="cross">Cross Sell</option>
+      <option value="close">Fechamento</option>
     </select>
 
     <div class="mt-4">
@@ -33,26 +34,34 @@
   <div class="md:col-span-3 bg-white rounded-2xl shadow flex flex-col">
     <div id="chat" class="flex-1 p-6 space-y-3 overflow-y-auto"></div>
     <div class="border-t p-4 flex gap-2">
-      <input id="input" class="flex-1 border rounded-xl px-4 py-2 text-sm" placeholder="Digite sua fala..." />
+      <input id="input" class="flex-1 border rounded-xl px-4 py-2 text-sm" placeholder="Digite sua pergunta ou fala comercial..." />
       <button onclick="send()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm">Enviar</button>
     </div>
   </div>
 </div>
 
 <script>
+let score = 0;
+
 const objectives = {
-  prospect: "Quebrar objeção inicial e gerar interesse",
-  qualify: "Levantar volume, frequência, rotas e decisor",
-  diagnostic: "Entender dores operacionais e financeiras",
-  proposal: "Avançar para proposta ou próxima etapa",
-  cross: "Identificar novas rotas ou aumento de share"
+  prospect: "Quebrar objeção e gerar abertura",
+  qualify: "Descobrir volume, frequência, rotas e decisor",
+  diagnostic: "Mapear dores logísticas reais",
+  proposal: "Avançar para proposta ou reunião",
+  cross: "Expandir rotas ou volume do cliente ativo",
+  close: "Confirmar acordo, alinhar próximos passos e fechar"
 };
 
-function startScenario() {
-  const stage = document.getElementById('stage').value;
+function resetSim() {
   document.getElementById('chat').innerHTML = "";
+  score = 0;
+}
+
+function startScenario() {
+  resetSim();
+  const stage = document.getElementById('stage').value;
   document.getElementById('objective').innerText = objectives[stage];
-  bot(`Cliente: Pode falar, o que você precisa?`);
+  bot('Cliente: Pode falar, mas seja breve.');
 }
 
 function send() {
@@ -61,25 +70,88 @@ function send() {
   if (!text) return;
   user(text);
   input.value = "";
-  setTimeout(() => respond(text), 700);
+  setTimeout(() => respond(text), 600);
 }
 
 function user(text) {
   chat.innerHTML += `<div class='text-right'><div class='inline-block bg-orange-100 px-4 py-2 rounded-xl text-sm'>${text}</div></div>`;
+  chat.scrollTop = chat.scrollHeight;
 }
 
 function bot(text) {
   chat.innerHTML += `<div class='text-left'><div class='inline-block bg-slate-200 px-4 py-2 rounded-xl text-sm'>${text}</div></div>`;
+  chat.scrollTop = chat.scrollHeight;
 }
 
 function respond(text) {
   const t = text.toLowerCase();
-  if (t.includes('volume')) bot('Cliente: Enviamos de 2 a 4 vezes por semana.');
-  else if (t.includes('rota')) bot('Cliente: Principalmente SP e PR.');
-  else if (t.includes('problema') || t.includes('dor')) bot('Cliente: Muito atraso e pouca informação.');
-  else if (t.includes('preço')) bot('Cliente: Preço conta, mas confiabilidade pesa mais.');
-  else if (t.includes('agenda') || t.includes('proposta')) bot('Cliente: Pode preparar algo e me enviar.');
-  else bot('Cliente: Certo, continua.');
+  const stage = document.getElementById('stage').value;
+
+  if (stage === 'prospect') {
+    if (t.includes('motivo') || t.includes('rapido') || t.includes('objetivo')) {
+      score++;
+      bot('Cliente: Ok, pode falar. O que você quer saber?');
+    } else {
+      bot('Cliente: Você já está vendendo. O que exatamente você quer entender?');
+    }
+  }
+
+  if (stage === 'qualify') {
+    if (t.includes('volume')) { score++; bot('Cliente: Em média 3 embarques por semana.'); }
+    else if (t.includes('frequ')) { score++; bot('Cliente: Toda semana, sem falhar.'); }
+    else if (t.includes('rota') || t.includes('destino')) { score++; bot('Cliente: SP, PR e RS.'); }
+    else if (t.includes('decisor')) { score++; bot('Cliente: Sou eu mesmo que decido.'); }
+    else bot('Cliente: Não sei se isso é relevante agora.');
+  }
+
+  if (stage === 'diagnostic') {
+    if (t.includes('problema') || t.includes('dor') || t.includes('dificuldade')) {
+      score++;
+      bot('Cliente: Atraso e pouca visibilidade das entregas.');
+    } else {
+      bot('Cliente: Hoje funciona, mas poderia melhorar.');
+    }
+  }
+
+  if (stage === 'proposal') {
+    if (t.includes('reuni') || t.includes('proposta') || t.includes('analise')) {
+      score++;
+      bot('Cliente: Pode preparar algo e me enviar.');
+    } else if (t.includes('preço')) {
+      bot('Cliente: Preço agora não faz sentido sem entender melhor.');
+    } else {
+      bot('Cliente: E qual seria o próximo passo?');
+    }
+  }
+
+  if (stage === 'cross') {
+    if (t.includes('outra rota') || t.includes('mais envio') || t.includes('expand')) {
+      score++;
+      bot('Cliente: Hoje só envio SP, mas posso avaliar outras rotas.');
+    } else {
+      bot('Cliente: Hoje isso não está no radar.');
+    }
+  }
+
+  if (stage === 'close') {
+    if (t.includes('fechar') || t.includes('avançar') || t.includes('iniciar') || t.includes('contrato')) {
+      score++;
+      bot('Cliente: Ok, podemos iniciar. Me envie o contrato e dados operacionais.');
+    } else if (t.includes('preço')) {
+      bot('Cliente: O valor está ok, só preciso de segurança no prazo.');
+    } else {
+      bot('Cliente: O que falta para avançarmos?');
+    }
+  } else {
+      bot('Cliente: Hoje isso não está no radar.');
+    }
+  }
+
+  if (score >= 3) {
+    setTimeout(() => {
+      bot('✅ Avaliação: Boa condução! Você avançou corretamente esta etapa do funil.');
+    }, 500);
+  }
 }
 </script>
 </body>
